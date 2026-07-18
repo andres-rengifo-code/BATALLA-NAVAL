@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="proyect_batalla_naval.controller.GameController"
+            style="-fx-background-color: #1a1a2e;" prefWidth="1100" prefHeight="650">
+
+    <!-- Parte superior: Título y estado -->
+    <top>
+        <VBox alignment="CENTER" spacing="5">
+            <padding>
+                <Insets bottom="10" left="20" right="20" top="15"/>
+            </padding>
+            <Label fx:id="titleLabel" text="⚓ BATALLA NAVAL ⚓"
+                   style="-fx-font-size: 22; -fx-font-weight: bold; -fx-text-fill: #e0e0e0;"/>
+            <Label fx:id="statusLabel" text="Coloca tus barcos en el tablero"
+                   style="-fx-font-size: 15; -fx-text-fill: #8888aa;"/>
+        </VBox>
+    </top>
+
+    <!-- Centro: Ambos tableros -->
+    <center>
+        <HBox alignment="CENTER" spacing="40">
+            <padding>
+                <Insets bottom="10" left="20" right="20" top="10"/>
+            </padding>
+
+            <!-- Tablero del jugador -->
+            <VBox alignment="CENTER" spacing="8">
+                <Label fx:id="playerBoardLabel" text="Tu Tablero"
+                       style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #6ec6ff;"/>
+                <GridPane fx:id="playerGrid" gridLinesVisible="false"
+                          style="-fx-background-color: #16213e; -fx-padding: 2;"/>
+            </VBox>
+
+            <!-- Tablero enemigo -->
+            <VBox alignment="CENTER" spacing="8">
+                <Label fx:id="enemyBoardLabel" text="Tablero Enemigo"
+                       style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #ff6e6e;"/>
+                <GridPane fx:id="enemyGrid" gridLinesVisible="false"
+                          style="-fx-background-color: #16213e; -fx-padding: 2;"/>
+            </VBox>
+        </HBox>
+    </center>
+
+    <!-- Derecha: Panel de selección de barcos -->
+    <right>
+        <VBox fx:id="shipPanel" spacing="8" alignment="TOP_CENTER" prefWidth="200"
+              style="-fx-background-color: #16213e; -fx-padding: 15;">
+            <Label text="Barcos"
+                   style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #e0e0e0;"/>
+            <Separator/>
+            <VBox fx:id="shipListBox" spacing="5"/>
+            <Separator/>
+            <Label fx:id="orientationLabel" text="Orientación: Horizontal"
+                   style="-fx-text-fill: #c0c0c0; -fx-font-size: 12;"/>
+            <Button fx:id="rotateButton" text="🔄 Rotar" onAction="#onRotateClicked"
+                    style="-fx-background-color: #0f3460; -fx-text-fill: white; -fx-padding: 8 20; -fx-cursor: hand;"
+                    maxWidth="Infinity"/>
+            <Separator/>
+            <Button fx:id="startGameButton" text="▶ Iniciar Juego" onAction="#onStartGameClicked"
+                    style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-padding: 10 20; -fx-cursor: hand;"
+                    disable="true" maxWidth="Infinity"/>
+            <Separator/>
+            <VBox spacing="3">
+                <Label fx:id="playerSunkLabel" text="Tus hundidos: 0/10"
+                       style="-fx-text-fill: #6ec6ff; -fx-font-size: 12;"/>
+                <Label fx:id="machineSunkLabel" text="Enemigo hundidos: 0/10"
+                       style="-fx-text-fill: #ff6e6e; -fx-font-size: 12;"/>
+            </VBox>
+        </VBox>
+    </right>
+
+    <!-- Inferior: Información -->
+    <bottom>
+        <HBox alignment="CENTER" spacing="20">
+            <padding>
+                <Insets bottom="10" left="20" right="20" top="5"/>
+            </padding>
+            <Label fx:id="infoLabel" text="Selecciona un barco de la lista para colocarlo"
+                   style="-fx-text-fill: #aaa; -fx-font-size: 12;"/>
+        </HBox>
+    </bottom>
+</BorderPane>

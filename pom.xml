@@ -61,7 +61,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                com.example.proyect_batalla_naval/com.example.proyect_batalla_naval.HelloApplication
+                                com.example.proyect_batalla_naval/proyect_batalla_naval.HelloApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
