@@ -1,6 +1,7 @@
 package proyect_batalla_naval.controller;
 
 import proyect_batalla_naval.model.*;
+import proyect_batalla_naval.exceptions.GameStateException;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -18,11 +19,14 @@ import proyect_batalla_naval.model.Ship;
 import proyect_batalla_naval.model.ShotResult;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador principal del juego Batalla Naval.
  * Gestiona la interacción del usuario con los tableros,
- * la colocación de barcos (HU-1) y la realización de disparos (HU-2).
+ * la colocación de barcos (HU-1), la realización de disparos (HU-2),
+ * la visualización de verificación del tablero del oponente (HU-3)
+ * y la IA de la máquina (HU-4).
  *
  * @author Andres Felipe Rengifo Rodriguez
  */
@@ -48,6 +52,15 @@ public class GameController {
     @FXML private Label machineSunkLabel;
     @FXML private Label infoLabel;
 
+    /** Botón de verificación docente (HU-3): solo disponible antes de iniciar la partida. */
+    @FXML private Button revealButton;
+
+    /** Etiqueta de precisión de disparos del jugador. */
+    @FXML private Label accuracyLabel;
+
+    /** Panel con el historial reciente de disparos (pila de movimientos). */
+    @FXML private VBox historyBox;
+
     // ---- Estado interno ----
 
     /** Instancia del modelo del juego. */
@@ -64,6 +77,12 @@ public class GameController {
 
     /** Orientación actual del barco a colocar. */
     private boolean horizontal = true;
+
+    /**
+     * HU-3: indica si el tablero de la máquina se está mostrando en modo
+     * verificación (solo disponible durante la colocación de barcos).
+     */
+    private boolean revealingEnemyBoard = false;
 
 
     @FXML
@@ -84,6 +103,14 @@ public class GameController {
         buildGrid(enemyGrid, enemyCells, false);
         populateShipList();
         updateStatus();
+        updateSunkCounts();
+        updateHistoryPanel();
+
+        if (revealButton != null) {
+            revealButton.setVisible(true);
+            revealButton.setManaged(true);
+            revealButton.setText("🔍 Ver tablero del oponente (verificación)");
+        }
     }
 
     // =========================================================================
@@ -264,6 +291,8 @@ public class GameController {
     /**
      * Maneja el clic en el botón "Iniciar Juego".
      * Cambia el estado del juego a PLAYING y desactiva los controles de colocación.
+     * A partir de este punto, la opción de verificación del tablero enemigo (HU-3)
+     * deja de estar disponible.
      */
     @FXML
     protected void onStartGameClicked() {
@@ -280,11 +309,42 @@ public class GameController {
             for (Node node : shipListBox.getChildren()) {
                 node.setDisable(true);
             }
+
+            // HU-3: la verificación del tablero del oponente solo aplica antes de jugar
+            revealingEnemyBoard = false;
+            if (revealButton != null) {
+                revealButton.setVisible(false);
+                revealButton.setManaged(false);
+            }
+            refreshEnemyBoard();
         }
     }
 
     // =========================================================================
-    //  HU-2: REALIZACIÓN DE DISPAROS
+    //  HU-3: VISUALIZACIÓN DEL TABLERO DE POSICIÓN DEL OPONENTE (VERIFICACIÓN)
+    // =========================================================================
+
+    /**
+     * Maneja el clic en el botón de verificación docente. Alterna entre
+     * mostrar y ocultar la flota de la máquina en el tablero enemigo.
+     * Solo tiene efecto mientras el juego está en la fase de colocación de
+     * barcos ({@link Game.GameState#PLACING_SHIPS}); una vez iniciada la
+     * partida el botón se oculta y esta acción no tiene efecto alguno.
+     */
+    @FXML
+    protected void onToggleRevealClicked() {
+        if (game == null || game.getState() != Game.GameState.PLACING_SHIPS) {
+            return;
+        }
+        revealingEnemyBoard = !revealingEnemyBoard;
+        revealButton.setText(revealingEnemyBoard
+                ? "🙈 Ocultar tablero (verificación)"
+                : "🔍 Ver tablero del oponente (verificación)");
+        refreshEnemyBoard();
+    }
+
+    // =========================================================================
+    //  HU-2 y HU-4: DISPAROS DEL JUGADOR E IA DE LA MÁQUINA
     // =========================================================================
 
     /**
@@ -294,18 +354,24 @@ public class GameController {
      * @param col columna del disparo
      */
     private void onEnemyCellClicked(int row, int col) {
-        if (game == null || game.getState() != Game.GameState.PLAYING || !game.isPlayerTurn()) {
+        if (game == null) return;
+
+        ShotResult result;
+        try {
+            result = game.playerShoot(row, col);
+        } catch (GameStateException e) {
+            // No es el turno del jugador o el juego no está en curso: se ignora el clic.
             return;
         }
 
-        ShotResult result = game.playerShoot(row, col);
-        if (result == null || result == ShotResult.ALREADY_SHOT) {
+        if (result == ShotResult.ALREADY_SHOT) {
             infoLabel.setText("⚠ Ya disparaste en esa casilla. Elige otra.");
             return;
         }
 
         refreshEnemyCell(row, col);
         updateSunkCounts();
+        updateHistoryPanel();
 
         // Verificar fin del juego primero
         if (game.getState() == Game.GameState.GAME_OVER) {
@@ -345,15 +411,22 @@ public class GameController {
     }
 
     /**
-     * Ejecuta el turno de la máquina: dispara aleatoriamente y procesa el resultado.
-     * Si la máquina acierta (tocado o hundido), vuelve a disparar con un retardo.
+     * Ejecuta el turno de la máquina (HU-4): dispara de forma autónoma y
+     * procesa el resultado. Si la máquina acierta (tocado o hundido), vuelve
+     * a disparar con un retardo.
      */
     private void doMachineTurn() {
-        if (game.getState() != Game.GameState.PLAYING || game.isPlayerTurn()) return;
+        ShotResult result;
+        try {
+            result = game.machineShoot();
+        } catch (GameStateException e) {
+            // No es el turno de la máquina o el juego no está en curso.
+            return;
+        }
 
-        ShotResult result = game.machineShoot();
         refreshPlayerBoard();
         updateSunkCounts();
+        updateHistoryPanel();
 
         int mr = game.getLastMachineShotRow();
         int mc = game.getLastMachineShotCol();
@@ -481,7 +554,9 @@ public class GameController {
 
     /**
      * actualiza visualmente una celda individual del tablero enemigo.
-     * No revela barcos no impactados del enemigo.
+     * No revela barcos no impactados del enemigo, salvo que el modo de
+     * verificación (HU-3) esté activo y el juego aún esté en la fase de
+     * colocación de barcos.
      *
      * @param row fila de la celda
      * @param col columna de la celda
@@ -493,11 +568,16 @@ public class GameController {
         }
         Rectangle rect = (Rectangle) cell.getChildren().get(0);
 
+        boolean verifying = revealingEnemyBoard && game.getState() == Game.GameState.PLACING_SHIPS;
+
         int state = game.getMachineBoard().getCell(row, col);
         switch (state) {
             case Board.EMPTY:
-            case Board.SHIP: // No revelar barcos enemigos
                 rect.setFill(Color.web("#2a4a7f"));
+                break;
+            case Board.SHIP:
+                // Solo se revela con fines de verificación docente, antes de iniciar la partida
+                rect.setFill(verifying ? Color.web("#607d8b") : Color.web("#2a4a7f"));
                 break;
             case Board.WATER:
                 rect.setFill(Color.web("#2a4a7f"));
@@ -574,11 +654,44 @@ public class GameController {
 
 
     /**
-     * Actualiza los contadores de barcos hundidos en la interfaz.
+     * Actualiza los contadores de barcos hundidos y la precisión de disparo
+     * del jugador (calculada a partir de la tabla de estadísticas del modelo).
      */
     private void updateSunkCounts() {
         playerSunkLabel.setText("Tus hundidos: " + game.getPlayerSunkCount() + "/10");
         machineSunkLabel.setText("Enemigo hundidos: " + game.getMachineSunkCount() + "/10");
+
+        if (accuracyLabel != null) {
+            Map<String, Integer> stats = game.getStats();
+            int shots = stats.getOrDefault("playerShots", 0);
+            int hits = stats.getOrDefault("playerHits", 0);
+            int accuracy = shots == 0 ? 0 : (hits * 100 / shots);
+            accuracyLabel.setText("Precisión: " + accuracy + "%");
+        }
+    }
+
+    /**
+     * Actualiza el panel de historial reciente de disparos, obtenido desde
+     * la pila de movimientos del modelo ({@code Game.getRecentMoves}).
+     */
+    private void updateHistoryPanel() {
+        if (historyBox == null) return;
+        historyBox.getChildren().clear();
+
+        List<ShotRecord> recent = game.getRecentMoves(6);
+        for (ShotRecord record : recent) {
+            String who = record.isByPlayer() ? "Tú" : "Máquina";
+            String resultText;
+            switch (record.getResult()) {
+                case WATER: resultText = "Agua"; break;
+                case HIT: resultText = "Tocado"; break;
+                case SUNK: resultText = "Hundido"; break;
+                default: resultText = "Repetido"; break;
+            }
+            Label entry = new Label(who + " → " + record.getCoordinate() + ": " + resultText);
+            entry.setStyle("-fx-text-fill: #c0c0c0; -fx-font-size: 11;");
+            historyBox.getChildren().add(entry);
+        }
     }
 
     /**
