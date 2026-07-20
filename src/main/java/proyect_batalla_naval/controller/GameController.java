@@ -17,7 +17,9 @@ import proyect_batalla_naval.model.Board;
 import proyect_batalla_naval.model.Game;
 import proyect_batalla_naval.model.Ship;
 import proyect_batalla_naval.model.ShotResult;
+import proyect_batalla_naval.persistence.GameSaveManager;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -90,14 +92,34 @@ public class GameController {
         initGame(Session.nickname);
     }
 
-    /**
+      /**
      * Inicializa el juego con el nickname del jugador.
      * Crea el modelo, construye los tableros visuales y muestra la lista de barcos.
      *
      * @param nickname nombre del jugador
      */
     public void initGame(String nickname) {
-        game = new Game(nickname);
+        if (GameSaveManager.existsSave()) {
+
+            try {
+                game = GameSaveManager.loadGame();
+
+                // Si la partida cargada ya terminó, eliminar el guardado
+                // e iniciar una nueva partida.
+                if (game.getState() == Game.GameState.GAME_OVER) {
+                    GameSaveManager.deleteSave();
+                    game = new Game(nickname);
+                }
+
+            } catch (Exception e) {
+                game = new Game(nickname);
+            }
+
+        } else {
+
+            game = new Game(nickname);
+
+        }
         playerBoardLabel.setText("Tablero de " + nickname);
         buildGrid(playerGrid, playerCells, true);
         buildGrid(enemyGrid, enemyCells, false);
@@ -369,6 +391,12 @@ public class GameController {
             return;
         }
 
+        try {
+            GameSaveManager.saveGame(game);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         refreshEnemyCell(row, col);
         updateSunkCounts();
         updateHistoryPanel();
@@ -420,8 +448,13 @@ public class GameController {
         try {
             result = game.machineShoot();
         } catch (GameStateException e) {
-            // No es el turno de la máquina o el juego no está en curso.
             return;
+        }
+
+        try {
+            GameSaveManager.saveGame(game);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
 
         refreshPlayerBoard();

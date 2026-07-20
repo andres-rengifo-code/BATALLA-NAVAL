@@ -2,6 +2,7 @@ package proyect_batalla_naval.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 /**
  * Representa un barco en el juego de Batalla Naval.
@@ -10,7 +11,7 @@ import java.util.List;
  *
  * @author Andres Felipe Rengifo Rodriguez
  */
-public class Ship {
+public class Ship implements Serializable{
 
     /** Nombre del barco (ej: "Portaaviones", "Submarino 1"). */
     private String name;
@@ -32,6 +33,9 @@ public class Ship {
 
     /** Indica si el barco ya fue colocado en el tablero. */
     private boolean placed;
+
+    /**Identificador de versión para la serialización de la clase.*/
+    private static final long serialVersionUID = 1L;
 
     /**
      * Crea un nuevo barco con el nombre y tamaño indicados.

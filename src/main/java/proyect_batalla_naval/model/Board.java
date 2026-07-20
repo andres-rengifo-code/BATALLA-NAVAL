@@ -1,10 +1,12 @@
 package proyect_batalla_naval.model;
 
+import jdk.dynalink.beans.StaticClass;
 import proyect_batalla_naval.exceptions.InvalidPlacementException;
 import proyect_batalla_naval.exceptions.InvalidShotException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 /**
  * Representa un tablero de 10×10 del juego Batalla Naval.
@@ -12,7 +14,7 @@ import java.util.List;
  *
  * @author Andres Felipe Rengifo Rodriguez
  */
-public class Board {
+public class Board implements Serializable {
 
     /** Tamaño del tablero (10×10). */
     public static final int SIZE = 10;
@@ -37,6 +39,9 @@ public class Board {
 
     /** Lista de barcos colocados en este tablero. */
     private List<Ship> ships;
+
+    /**Identificador de versión para la serialización de la clase.*/
+    private static final long serialVersionUID =1L;
 
     /**
      * Crea un nuevo tablero vacío de 10×10.
