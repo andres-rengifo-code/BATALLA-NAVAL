@@ -123,6 +123,12 @@ public class GameController {
         playerBoardLabel.setText("Tablero de " + nickname);
         buildGrid(playerGrid, playerCells, true);
         buildGrid(enemyGrid, enemyCells, false);
+
+        // Si la partida fue cargada desde un guardado
+        // repintar ambos tableros con el estado recuperado.
+        refreshPlayerBoard();
+        refreshEnemyBoard();
+
         populateShipList();
         updateStatus();
         updateSunkCounts();
