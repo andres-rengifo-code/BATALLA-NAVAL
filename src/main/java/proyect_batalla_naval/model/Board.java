@@ -1,5 +1,8 @@
 package proyect_batalla_naval.model;
 
+import proyect_batalla_naval.exceptions.InvalidPlacementException;
+import proyect_batalla_naval.exceptions.InvalidShotException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +57,7 @@ public class Board {
      * @return {@code true} si la colocación es válida
      */
     public boolean canPlaceShip(int row, int col, int size, boolean horizontal) {
+        if (row < 0 || col < 0 || row >= SIZE || col >= SIZE) return false;
         if (horizontal) {
             if (col + size > SIZE) return false;
             for (int i = 0; i < size; i++) {
@@ -69,15 +73,24 @@ public class Board {
     }
 
     /**
-     * Coloca un barco en la posición indicada. Se asume que ya se validó
-     * con {canPlaceShip(int, int, int, boolean)}.
+     * Coloca un barco en la posición indicada, validando internamente que la
+     * colocación sea legal.
      *
      * @param ship       el barco a colocar
      * @param row        fila inicial
      * @param col        columna inicial
      * @param horizontal {@code true} para orientación horizontal
+     * @throws InvalidPlacementException si la posición está fuera de rango,
+     *                                    se sale del tablero o se superpone
+     *                                    con otro barco ya colocado
      */
-    public void placeShip(Ship ship, int row, int col, boolean horizontal) {
+    public void placeShip(Ship ship, int row, int col, boolean horizontal) throws InvalidPlacementException {
+        if (!canPlaceShip(row, col, ship.getSize(), horizontal)) {
+            throw new InvalidPlacementException(
+                    "No se puede colocar el barco '" + ship.getName() + "' en la posición ("
+                            + row + ", " + col + ") con orientación "
+                            + (horizontal ? "horizontal" : "vertical") + ".");
+        }
         ship.setPosition(row, col, horizontal);
         if (horizontal) {
             for (int i = 0; i < ship.getSize(); i++) {
@@ -97,8 +110,10 @@ public class Board {
      * @param row fila del disparo
      * @param col columna del disparo
      * @return resultado del disparo
+     * @throws InvalidShotException si las coordenadas están fuera del tablero
      */
     public ShotResult receiveShot(int row, int col) {
+        validateCoordinates(row, col);
         if (grid[row][col] == WATER || grid[row][col] == HIT || grid[row][col] == SUNK) {
             return ShotResult.ALREADY_SHOT;
         }
@@ -118,6 +133,19 @@ public class Board {
             return ShotResult.HIT;
         }
         return ShotResult.WATER;
+    }
+
+    /**
+     * Valida que unas coordenadas estén dentro de los límites del tablero.
+     *
+     * @param row fila a validar
+     * @param col columna a validar
+     * @throws InvalidShotException si la fila o columna están fuera de rango (0-9)
+     */
+    private void validateCoordinates(int row, int col) {
+        if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) {
+            throw new InvalidShotException("Coordenadas fuera del tablero: (" + row + ", " + col + ").");
+        }
     }
 
     /**
@@ -167,8 +195,10 @@ public class Board {
      * @param row fila
      * @param col columna
      * @return valor del estado de la celda
+     * @throws InvalidShotException si las coordenadas están fuera del tablero
      */
     public int getCell(int row, int col) {
+        validateCoordinates(row, col);
         return grid[row][col];
     }
 
