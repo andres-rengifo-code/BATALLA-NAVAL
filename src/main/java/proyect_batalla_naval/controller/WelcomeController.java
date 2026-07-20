@@ -2,11 +2,16 @@ package proyect_batalla_naval.controller;
 
 import javafx.fxml.FXML;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import proyect_batalla_naval.model.Session;
+import proyect_batalla_naval.persistence.GameSaveManager;
 import proyect_batalla_naval.utils.InsertScene;
 import proyect_batalla_naval.utils.Paths;
+
+import java.util.Optional;
 
 /**
  * Controlador de la pantalla de bienvenida.
@@ -36,7 +41,43 @@ public class WelcomeController {
             errorLabel.setText("Por favor ingresa un nickname");
             return;
         }
-        Session.nickname = nickname;
+        if(GameSaveManager.existsSave()){
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+
+            alert.setTitle("Partida encontrada");
+
+            alert.setHeaderText("Existe una partida guardada.");
+
+            alert.setContentText("¿Desea continuar la partida anterior?");
+
+            ButtonType continuar = new ButtonType("Continuar");
+
+            ButtonType nueva = new ButtonType("Nueva partida");
+
+            alert.getButtonTypes().setAll(continuar,nueva);
+
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if(result.isPresent() && result.get()==continuar){
+
+                Session.nickname =
+                        GameSaveManager.loadNickname();
+
+            }else{
+
+                GameSaveManager.deleteSave();
+
+                Session.nickname = nickname;
+
+            }
+
+        }else{
+
+            Session.nickname = nickname;
+
+        }
+
         InsertScene.setScene(Paths.GAME);
     }
 }

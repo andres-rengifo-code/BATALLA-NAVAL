@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.io.Serializable;
 
 /**
  * Clase principal del modelo que gestiona la lógica del juego Batalla Naval.
@@ -18,7 +19,9 @@ import java.util.Random;
  *
  * @author Andres Felipe Rengifo Rodriguez
  */
-public class Game {
+
+/** Implementa serializable para guardar y recuperar las partidas @author: Juan Gomez*/
+public class Game implements Serializable {
 
     /**
      * Estados posibles del juego.
@@ -64,6 +67,9 @@ public class Game {
 
     /** Columna del último disparo de la máquina. */
     private int lastMachineShotCol = -1;
+
+    /**Identificador de versión para la serialización de la clase.*/
+    private static final long serialVersionUID = 1L;
 
     /**
      * Cola (FIFO) de casillas candidatas para el "modo caza" de la IA: cuando

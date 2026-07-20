@@ -1,5 +1,7 @@
 package proyect_batalla_naval.model;
 
+import java.io.Serializable;
+
 /**
  * Representa un disparo realizado durante la partida, ya sea por el
  * jugador humano o por la máquina. Se utiliza para construir el
@@ -7,7 +9,7 @@ package proyect_batalla_naval.model;
  *
  * @author Andres Felipe Rengifo Rodriguez
  */
-public class ShotRecord {
+public class ShotRecord implements Serializable {
 
     /** Fila donde se realizó el disparo. */
     private final int row;
@@ -21,6 +23,8 @@ public class ShotRecord {
     /** {@code true} si el disparo lo realizó el jugador humano, {@code false} si fue la máquina. */
     private final boolean byPlayer;
 
+    /**Identificador de versión para la serialización de la clase.*/
+    private static final long serialVersionUID = 1L;
     /**
      * Crea un nuevo registro de disparo.
      *
