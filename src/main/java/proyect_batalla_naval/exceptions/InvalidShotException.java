@@ -10,6 +10,8 @@ package proyect_batalla_naval.exceptions;
  * código que la invoca deba estar obligado a manejar en cada llamada.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class InvalidShotException extends RuntimeException {
 

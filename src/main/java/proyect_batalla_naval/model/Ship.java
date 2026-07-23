@@ -10,6 +10,8 @@ import java.io.Serializable;
  * orientación (horizontal o vertical) y un registro de impactos.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class Ship implements Serializable{
 

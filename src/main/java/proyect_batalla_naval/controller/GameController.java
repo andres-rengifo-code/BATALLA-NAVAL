@@ -31,6 +31,8 @@ import java.util.Map;
  * y la IA de la máquina (HU-4).
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class GameController {
 

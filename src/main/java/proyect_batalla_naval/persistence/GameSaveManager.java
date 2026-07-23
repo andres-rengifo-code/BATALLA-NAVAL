@@ -10,6 +10,8 @@ import java.io.*;
  * - Nickname del jugador en un archivo plano.
  *
  * @author Juan Pablo Gómez
+ * @author Andres Felipe Rengifo Rodriguez
+ * @author Álvaro Iván Ospina Capera
  */
 public class GameSaveManager {
 

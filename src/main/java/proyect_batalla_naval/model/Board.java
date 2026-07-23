@@ -13,6 +13,8 @@ import java.io.Serializable;
  * Cada celda almacena un estado: vacío, barco, agua (fallo), tocado o hundido.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class Board implements Serializable {
 

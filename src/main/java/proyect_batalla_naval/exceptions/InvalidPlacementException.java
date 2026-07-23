@@ -10,6 +10,8 @@ package proyect_batalla_naval.exceptions;
  * {@code try/catch} o a propagarla con {@code throws}.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class InvalidPlacementException extends Exception {
 

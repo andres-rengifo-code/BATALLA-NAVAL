@@ -18,6 +18,8 @@ import java.util.Optional;
  * Permite al jugador ingresar su nickname e iniciar una nueva partida.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class WelcomeController {
 

@@ -18,6 +18,8 @@ import java.io.Serializable;
  * el estado del juego y la lógica de turnos.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 
 /** Implementa serializable para guardar y recuperar las partidas @author: Juan Gomez*/

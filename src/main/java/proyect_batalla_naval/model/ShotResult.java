@@ -4,6 +4,8 @@ package proyect_batalla_naval.model;
  * Representa el resultado de un disparo en el juego de Batalla Naval.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public enum ShotResult {
 

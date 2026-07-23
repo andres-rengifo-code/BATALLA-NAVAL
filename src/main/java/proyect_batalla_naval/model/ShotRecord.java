@@ -8,6 +8,8 @@ import java.io.Serializable;
  * historial de movimientos de la partida.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class ShotRecord implements Serializable {
 

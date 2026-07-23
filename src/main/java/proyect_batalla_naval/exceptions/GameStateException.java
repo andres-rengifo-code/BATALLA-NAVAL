@@ -7,6 +7,8 @@ package proyect_batalla_naval.exceptions;
  * turno correspondiente o cuando el juego ya terminó.
  *
  * @author Andres Felipe Rengifo Rodriguez
+ * @author Juan Pablo Gomez
+ * @author Álvaro Iván Ospina Capera
  */
 public class GameStateException extends RuntimeException {
 
