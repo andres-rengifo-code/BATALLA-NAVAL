@@ -1,7 +1,6 @@
 module proyect_batalla_naval {
     requires javafx.controls;
     requires javafx.fxml;
-    requires jdk.dynalink;
 
     opens proyect_batalla_naval to javafx.fxml;
     opens proyect_batalla_naval.controller to javafx.fxml;

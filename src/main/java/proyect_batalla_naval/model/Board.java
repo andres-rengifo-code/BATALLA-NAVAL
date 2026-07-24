@@ -1,6 +1,5 @@
 package proyect_batalla_naval.model;
 
-import jdk.dynalink.beans.StaticClass;
 import proyect_batalla_naval.exceptions.InvalidPlacementException;
 import proyect_batalla_naval.exceptions.InvalidShotException;
 
@@ -42,8 +41,8 @@ public class Board implements Serializable {
     /** Lista de barcos colocados en este tablero. */
     private List<Ship> ships;
 
-    /**Identificador de versión para la serialización de la clase.*/
-    private static final long serialVersionUID =1L;
+    /** Identificador de versión para la serialización de la clase. */
+    private static final long serialVersionUID = 1L;
 
     /**
      * Crea un nuevo tablero vacío de 10×10.

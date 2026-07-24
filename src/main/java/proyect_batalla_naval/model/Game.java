@@ -3,6 +3,7 @@ package proyect_batalla_naval.model;
 import proyect_batalla_naval.exceptions.GameStateException;
 import proyect_batalla_naval.exceptions.InvalidPlacementException;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -10,20 +11,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.io.Serializable;
 
 /**
  * Clase principal del modelo que gestiona la lógica del juego Batalla Naval.
  * Contiene los tableros del jugador y de la máquina, la flota de barcos,
  * el estado del juego y la lógica de turnos.
+ * <p>
+ * La creación de la flota se delega en {@link ShipFactory} (patrón
+ * creacional Factory Method) y la lógica de disparo de la máquina se
+ * delega en una {@link ShootingStrategy} (patrón de comportamiento
+ * Strategy), en lugar de estar implementadas directamente aquí.
+ * <p>
+ * Implementa {@link Serializable} para permitir guardar y recuperar
+ * partidas mediante {@code GameSaveManager}.
  *
  * @author Andres Felipe Rengifo Rodriguez
  * @author Juan Pablo Gomez
  * @author Álvaro Iván Ospina Capera
  */
-
-/** Implementa serializable para guardar y recuperar las partidas @author: Juan Gomez*/
 public class Game implements Serializable {
+
+    /** Identificador de versión para la serialización de la clase. */
+    private static final long serialVersionUID = 1L;
 
     /**
      * Estados posibles del juego.
@@ -52,7 +61,7 @@ public class Game implements Serializable {
     /** Nickname del jugador humano. */
     private String playerNickname;
 
-    /** Generador de números aleatorios. */
+    /** Generador de números aleatorios (usado para la colocación de barcos de la máquina). */
     private Random random;
 
     /** Indica si es el turno del jugador humano. */
@@ -70,15 +79,13 @@ public class Game implements Serializable {
     /** Columna del último disparo de la máquina. */
     private int lastMachineShotCol = -1;
 
-    /**Identificador de versión para la serialización de la clase.*/
-    private static final long serialVersionUID = 1L;
-
     /**
-     * Cola (FIFO) de casillas candidatas para el "modo caza" de la IA: cuando
-     * la máquina toca un barco sin hundirlo, se encolan las celdas vecinas
-     * para intentarlas antes de volver a disparar completamente al azar.
+     * Estrategia de disparo usada por la máquina durante su turno
+     * (patrón de comportamiento Strategy). Por defecto usa
+     * {@link HuntTargetStrategy}, pero podría intercambiarse por cualquier
+     * otra implementación de {@link ShootingStrategy} sin modificar esta clase.
      */
-    private Deque<int[]> huntQueue;
+    private ShootingStrategy machineStrategy;
 
     /**
      * Pila (LIFO) con el historial de disparos de toda la partida (tanto del
@@ -107,7 +114,7 @@ public class Game implements Serializable {
         this.state = GameState.PLACING_SHIPS;
         this.playerTurn = true;
         this.machineShotsTaken = new boolean[Board.SIZE][Board.SIZE];
-        this.huntQueue = new ArrayDeque<>();
+        this.machineStrategy = new HuntTargetStrategy();
         this.moveHistory = new ArrayDeque<>();
         this.stats = new HashMap<>();
         stats.put("playerShots", 0);
@@ -115,32 +122,11 @@ public class Game implements Serializable {
         stats.put("machineShots", 0);
         stats.put("machineHits", 0);
 
-        // Crear la flota del jugador para colocar
-        this.playerShipsToPlace = createFleet();
+        // Crear la flota del jugador para colocar (Factory Method)
+        this.playerShipsToPlace = ShipFactory.createStandardFleet();
 
         // Colocar barcos de la máquina aleatoriamente
         placeMachineShipsRandomly();
-    }
-
-    /**
-     * Crea la flota estándar del juego: 1 portaaviones (4),
-     * 2 submarinos (3), 3 destructores (2) y 4 fragatas (1).
-     *
-     * @return lista con los 10 barcos de la flota
-     */
-    private List<Ship> createFleet() {
-        List<Ship> fleet = new ArrayList<>();
-        fleet.add(new Ship("Portaaviones", 4));
-        fleet.add(new Ship("Submarino 1", 3));
-        fleet.add(new Ship("Submarino 2", 3));
-        fleet.add(new Ship("Destructor 1", 2));
-        fleet.add(new Ship("Destructor 2", 2));
-        fleet.add(new Ship("Destructor 3", 2));
-        fleet.add(new Ship("Fragata 1", 1));
-        fleet.add(new Ship("Fragata 2", 1));
-        fleet.add(new Ship("Fragata 3", 1));
-        fleet.add(new Ship("Fragata 4", 1));
-        return fleet;
     }
 
     /**
@@ -148,7 +134,7 @@ public class Game implements Serializable {
      * respetando las reglas de no superposición y límites del tablero.
      */
     private void placeMachineShipsRandomly() {
-        List<Ship> machineShips = createFleet();
+        List<Ship> machineShips = ShipFactory.createStandardFleet();
         for (Ship ship : machineShips) {
             boolean placed = false;
             while (!placed) {
@@ -251,12 +237,13 @@ public class Game implements Serializable {
     }
 
     /**
-     * Realiza un disparo de la máquina al tablero del jugador.
+     * Realiza un disparo de la máquina al tablero del jugador (HU-4).
      * <p>
-     * La máquina dispara de manera aleatoria (HU-4), pero además implementa
-     * un sencillo "modo caza": cuando un disparo toca un barco sin hundirlo,
-     * las celdas vecinas se encolan como candidatas prioritarias para el
-     * siguiente disparo, antes de volver al modo completamente aleatorio.
+     * La selección de la celda y la reacción al resultado se delegan por
+     * completo en {@link #machineStrategy} (patrón Strategy); esta clase
+     * solo se encarga de orquestar el turno: marcar la celda como disparada,
+     * aplicar el disparo sobre el tablero, registrar historial/estadísticas
+     * y decidir si cambia el turno o si termina el juego.
      *
      * @return resultado del disparo
      * @throws GameStateException si el juego no está en curso o no es el turno de la máquina
@@ -266,27 +253,9 @@ public class Game implements Serializable {
             throw new GameStateException("No se puede disparar: el juego no está en curso o no es el turno de la máquina.");
         }
 
-        int row = -1, col = -1;
-        boolean found = false;
-
-        // Modo caza: intenta primero las celdas vecinas a un impacto previo
-        while (!huntQueue.isEmpty() && !found) {
-            int[] candidate = huntQueue.poll();
-            int r = candidate[0], c = candidate[1];
-            if (r >= 0 && r < Board.SIZE && c >= 0 && c < Board.SIZE && !machineShotsTaken[r][c]) {
-                row = r;
-                col = c;
-                found = true;
-            }
-        }
-
-        // Modo aleatorio: si no hay candidatos válidos pendientes
-        if (!found) {
-            do {
-                row = random.nextInt(Board.SIZE);
-                col = random.nextInt(Board.SIZE);
-            } while (machineShotsTaken[row][col]);
-        }
+        int[] shot = machineStrategy.chooseShot(machineShotsTaken);
+        int row = shot[0];
+        int col = shot[1];
 
         machineShotsTaken[row][col] = true;
         lastMachineShotRow = row;
@@ -295,16 +264,11 @@ public class Game implements Serializable {
 
         recordMove(row, col, result, false);
         updateStats(false, result);
+        machineStrategy.onShotResult(row, col, result);
+        // HIT o SUNK: la máquina vuelve a disparar (lo maneja el flujo del controlador)
 
         if (result == ShotResult.WATER) {
             playerTurn = true;
-        } else if (result == ShotResult.HIT) {
-            enqueueNeighbors(row, col);
-            // la máquina vuelve a disparar
-        } else if (result == ShotResult.SUNK) {
-            // El barco fue eliminado por completo: se descartan candidatos pendientes
-            huntQueue.clear();
-            // la máquina vuelve a disparar
         }
 
         if (playerBoard.areAllShipsSunk()) {
@@ -313,25 +277,6 @@ public class Game implements Serializable {
         }
 
         return result;
-    }
-
-    /**
-     * Encola las celdas vecinas (arriba, abajo, izquierda, derecha) de una
-     * celda impactada, para que la IA las intente antes de volver al modo
-     * completamente aleatorio.
-     *
-     * @param row fila del impacto
-     * @param col columna del impacto
-     */
-    private void enqueueNeighbors(int row, int col) {
-        int[][] deltas = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-        for (int[] d : deltas) {
-            int r = row + d[0];
-            int c = col + d[1];
-            if (r >= 0 && r < Board.SIZE && c >= 0 && c < Board.SIZE && !machineShotsTaken[r][c]) {
-                huntQueue.offer(new int[]{r, c});
-            }
-        }
     }
 
     /**

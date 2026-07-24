@@ -8,14 +8,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import proyect_batalla_naval.model.Session;
 import proyect_batalla_naval.persistence.GameSaveManager;
-import proyect_batalla_naval.utils.InsertScene;
-import proyect_batalla_naval.utils.Paths;
+import proyect_batalla_naval.utils.NavigationFacade;
 
 import java.util.Optional;
 
 /**
  * Controlador de la pantalla de bienvenida.
- * Permite al jugador ingresar su nickname e iniciar una nueva partida.
+ * Permite al jugador ingresar su nickname e iniciar una nueva partida,
+ * o continuar una partida previamente guardada.
  *
  * @author Andres Felipe Rengifo Rodriguez
  * @author Juan Pablo Gomez
@@ -33,7 +33,8 @@ public class WelcomeController {
 
     /**
      * Maneja el evento de clic en el botón "Jugar".
-     * Valida que el nickname no esté vacío y carga la vista del juego.
+     * Valida que el nickname no esté vacío, verifica si existe una partida
+     * guardada y carga la vista del juego.
      */
     @FXML
     protected void onPlayClicked() {
@@ -43,7 +44,7 @@ public class WelcomeController {
             errorLabel.setText("Por favor ingresa un nickname");
             return;
         }
-        if(GameSaveManager.existsSave()){
+        if (GameSaveManager.existsSave()) {
 
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
 
@@ -57,16 +58,15 @@ public class WelcomeController {
 
             ButtonType nueva = new ButtonType("Nueva partida");
 
-            alert.getButtonTypes().setAll(continuar,nueva);
+            alert.getButtonTypes().setAll(continuar, nueva);
 
             Optional<ButtonType> result = alert.showAndWait();
 
-            if(result.isPresent() && result.get()==continuar){
+            if (result.isPresent() && result.get() == continuar) {
 
-                Session.nickname =
-                        GameSaveManager.loadNickname();
+                Session.nickname = GameSaveManager.loadNickname();
 
-            }else{
+            } else {
 
                 GameSaveManager.deleteSave();
 
@@ -74,12 +74,12 @@ public class WelcomeController {
 
             }
 
-        }else{
+        } else {
 
             Session.nickname = nickname;
 
         }
 
-        InsertScene.setScene(Paths.GAME);
+        NavigationFacade.goToGame();
     }
 }
